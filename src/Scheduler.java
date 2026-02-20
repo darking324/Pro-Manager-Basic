@@ -6,7 +6,7 @@ public class Scheduler {
     static class DPProject {
         int id;
         String title;
-        int deadline;   // effective WORKING deadline
+        int deadline;
         int revenue;
 
         DPProject(int id, String title, int deadline, int revenue) {
@@ -21,7 +21,7 @@ public class Scheduler {
 
         List<DPProject> projects = new ArrayList<>();
 
-        // 1️⃣ Read projects from database
+        // Read projects from database
         try (Connection con = DBConnection.getConnection();
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM projects")) {
@@ -30,7 +30,7 @@ public class Scheduler {
 
                 int calendarDeadline = rs.getInt("deadline");
 
-                // 🔑 Convert CALENDAR deadline → WORKING deadline
+                // Convert CALENDAR deadline → WORKING deadline
                 int workingDays = calendarDeadline - (calendarDeadline / 7) * 2;
                 workingDays = Math.min(workingDays, 5); // max 5 slots/week
 
@@ -53,17 +53,17 @@ public class Scheduler {
             return;
         }
 
-        // 2️⃣ Sort by effective deadline (important for DP)
+        // Sort by effective deadline
         projects.sort(Comparator.comparingInt(p -> p.deadline));
 
         int n = projects.size();
         int maxDays = 5;
 
-        // 3️⃣ DP table
+        // DP table
         int[][] dp = new int[n + 1][maxDays + 1];
         boolean[][] take = new boolean[n + 1][maxDays + 1];
 
-        // 4️⃣ Fill DP table
+        // Fill DP table
         for (int i = 1; i <= n; i++) {
             DPProject p = projects.get(i - 1);
 
@@ -80,7 +80,7 @@ public class Scheduler {
             }
         }
 
-        // 5️⃣ Backtrack to find selected projects
+        // Backtrack to find selected projects
         List<DPProject> selected = new ArrayList<>();
         int d = maxDays;
 
@@ -94,7 +94,7 @@ public class Scheduler {
 
         Collections.reverse(selected);
 
-        // 6️⃣ Assign selected projects to days (earliest available)
+        // Assign selected projects to days
         String[] schedule = new String[5];
         String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 
@@ -105,7 +105,6 @@ public class Scheduler {
             }
         }
 
-        // 7️⃣ Output
         System.out.println("\nWeekly Schedule:");
         for (int i = 0; i < 5; i++) {
             System.out.println(days[i] + " : " +

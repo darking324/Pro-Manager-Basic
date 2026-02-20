@@ -3,9 +3,6 @@ import java.util.Scanner;
 
 public class ProjectDAO {
 
-    // ==============================
-    // ADD NEW PROJECT (WITH UNIQUE ID)
-    // ==============================
     public static void addProject() {
 
         Scanner sc = new Scanner(System.in);
@@ -50,9 +47,6 @@ public class ProjectDAO {
         }
     }
 
-    // ==============================
-    // VIEW ALL EXISTING PROJECTS
-    // ==============================
     public static void viewAllProjects() {
 
         String sql =
