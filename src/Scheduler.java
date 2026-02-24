@@ -1,13 +1,27 @@
 import java.sql.*;
 import java.util.*;
 
+/*
+ * Scheduler Class
+ *
+ * Responsibilities:
+ * - Convert last week's SCHEDULED → COMPLETED
+ * - Reduce deadlines weekly
+ * - Apply predictive scoring
+ * - Perform greedy scheduling
+ * - Expire rejected urgent projects
+ * - Store weekly revenue
+ */
+
 public class Scheduler {
 
-    // Internal lightweight model for scheduling
+    // ===============================
+    // Internal Lightweight Project Model
+    // ===============================
     static class Project {
         int id;
         String title;
-        int deadline;   // original deadline
+        int deadline;
         int revenue;
         double score;
 
@@ -19,15 +33,20 @@ public class Scheduler {
         }
     }
 
+    // ===============================
+    // MAIN SCHEDULER METHOD
+    // ===============================
     public static void generateSchedule() {
+
+        // STEP 0: Convert last week SCHEDULED → COMPLETED
+        markScheduledAsCompleted();
 
         List<Project> projects = new ArrayList<>();
         double expectedRevenue = predictNextWeekRevenue();
 
-        // Fetch only required fields
+        // STEP 2: Fetch PENDING projects
         String fetchSql =
-                "SELECT id, title, deadline, revenue " +
-                        "FROM projects WHERE status = 'PENDING'";
+                "SELECT id, title, deadline, revenue FROM projects WHERE status = 'PENDING'";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(fetchSql);
@@ -55,19 +74,17 @@ public class Scheduler {
             return;
         }
 
-        // =============================
-        // Predictive Scoring Model
-        // =============================
+        // STEP 3: Predictive Scoring
         for (Project p : projects) {
 
             double urgency = 1.0 / Math.max(p.deadline, 1);
-
             int futurePenalty = 0;
-            if (p.deadline > 5 && p.revenue < expectedRevenue) {
+
+            // Penalize low-value long-deadline projects slightly
+            if (p.deadline > 5 && p.revenue < expectedRevenue * 0.5) {
                 futurePenalty = 1;
             }
 
-            // Balanced scoring formula
             p.score =
                     (0.5 * p.revenue)
                             + (0.3 * urgency * 5000)
@@ -77,57 +94,155 @@ public class Scheduler {
         // Sort by score descending
         projects.sort((a, b) -> Double.compare(b.score, a.score));
 
-        // =============================
-        // Greedy Deadline Allocation
-        // =============================
+        // STEP 4: Greedy Scheduling
         Project[] week = new Project[5];
         int totalRevenue = 0;
 
         List<Integer> scheduledIds = new ArrayList<>();
+        List<Project> rejectedProjects = new ArrayList<>();
 
         for (Project p : projects) {
 
             int lastDay = Math.min(p.deadline, 5) - 1;
+            boolean assigned = false;
 
             for (int d = lastDay; d >= 0; d--) {
                 if (week[d] == null) {
                     week[d] = p;
                     totalRevenue += p.revenue;
                     scheduledIds.add(p.id);
+                    assigned = true;
                     break;
                 }
             }
+
+            if (!assigned) {
+                rejectedProjects.add(p);
+            }
         }
 
-        // Batch update scheduled projects
+        // STEP 5: Expire urgent rejected projects
+        expireRejectedUrgentProjects(rejectedProjects);
+
+        // STEP 6: Mark selected projects as SCHEDULED
         updateProjectStatusBatch(scheduledIds);
 
-        // Store revenue history
+        // STEP 7: Store weekly revenue
         storeWeeklyRevenue(totalRevenue);
 
-        // =============================
-        // Display Schedule
-        // =============================
-        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
-
-        System.out.println("\n=========================================");
-        System.out.println("Expected Next Week Revenue: " + expectedRevenue);
-        System.out.println("=========================================");
-
-        System.out.println("\nWeekly Schedule:");
-
-        for (int i = 0; i < 5; i++) {
-            System.out.println(days[i] + " : " +
-                    (week[i] != null ? week[i].title : "No Project"));
-        }
-
-        System.out.println("\nTotal Revenue: " + totalRevenue);
-        System.out.println("=========================================");
+        // STEP 8: Display schedule
+        displaySchedule(week, totalRevenue, expectedRevenue);
     }
 
-    // =============================
-    // Revenue Prediction (WMA)
-    // =============================
+    // ==========================================
+    // Convert SCHEDULED → COMPLETED
+    // ==========================================
+    private static void markScheduledAsCompleted() {
+
+        String sql =
+                "UPDATE projects SET status = 'COMPLETED' WHERE status = 'SCHEDULED'";
+
+        try (Connection con = DBConnection.getConnection();
+             Statement st = con.createStatement()) {
+
+            st.executeUpdate(sql);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ==========================================
+    // Reduce deadlines by 7 days
+    // ==========================================
+    private static void reduceDeadlinesByOneWeek() {
+
+        String sql =
+                "UPDATE projects SET deadline = deadline - 7 WHERE status = 'PENDING'";
+
+        try (Connection con = DBConnection.getConnection();
+             Statement st = con.createStatement()) {
+
+            st.executeUpdate(sql);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ==========================================
+    // Expire rejected urgent projects
+    // ==========================================
+    private static void expireRejectedUrgentProjects(List<Project> rejectedProjects) {
+
+        String sql =
+                "UPDATE projects SET status = 'EXPIRED' WHERE id = ?";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            for (Project p : rejectedProjects) {
+
+                if (p.deadline <= 5) {
+                    ps.setInt(1, p.id);
+                    ps.addBatch();
+                }
+            }
+
+            ps.executeBatch();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ==========================================
+    // Batch Update Status to SCHEDULED
+    // ==========================================
+    private static void updateProjectStatusBatch(List<Integer> ids) {
+
+        if (ids.isEmpty()) return;
+
+        String sql =
+                "UPDATE projects SET status = 'SCHEDULED' WHERE id = ?";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            for (int id : ids) {
+                ps.setInt(1, id);
+                ps.addBatch();
+            }
+
+            ps.executeBatch();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ==========================================
+    // Store Weekly Revenue
+    // ==========================================
+    private static void storeWeeklyRevenue(int revenue) {
+
+        String sql =
+                "INSERT INTO weekly_revenue_history(total_revenue) VALUES (?)";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, revenue);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ==========================================
+    // Weighted Moving Average Revenue Prediction
+    // ==========================================
     private static double predictNextWeekRevenue() {
 
         List<Integer> revenues = new ArrayList<>();
@@ -162,47 +277,28 @@ public class Scheduler {
                 + 0.2 * revenues.get(2);
     }
 
-    // =============================
-    // Batch Status Update
-    // =============================
-    private static void updateProjectStatusBatch(List<Integer> ids) {
+    // ==========================================
+    // Display Weekly Schedule
+    // ==========================================
+    private static void displaySchedule(Project[] week,
+                                        int totalRevenue,
+                                        double expectedRevenue) {
 
-        if (ids.isEmpty()) return;
+        String[] days =
+                {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 
-        String sql =
-                "UPDATE projects SET status = 'SCHEDULED' WHERE id = ?";
+        System.out.println("\n=========================================");
+        System.out.println("Expected Next Week Revenue: " + expectedRevenue);
+        System.out.println("=========================================");
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        System.out.println("\nWeekly Schedule:");
 
-            for (int id : ids) {
-                ps.setInt(1, id);
-                ps.addBatch();
-            }
-
-            ps.executeBatch();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (int i = 0; i < 5; i++) {
+            System.out.println(days[i] + " : " +
+                    (week[i] != null ? week[i].title : "No Project"));
         }
-    }
 
-    // =============================
-    // Store Weekly Revenue
-    // =============================
-    private static void storeWeeklyRevenue(int revenue) {
-
-        String sql =
-                "INSERT INTO weekly_revenue_history(total_revenue) VALUES (?)";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, revenue);
-            ps.executeUpdate();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        System.out.println("\nTotal Revenue: " + totalRevenue);
+        System.out.println("=========================================");
     }
 }
