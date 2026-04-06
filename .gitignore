@@ -26,5 +26,8 @@ bin/
 ### VS Code ###
 .vscode/
 
+### Local Config ###
+src/main/resources/application.properties
+
 ### Mac OS ###
 .DS_Store

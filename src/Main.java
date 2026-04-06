@@ -36,21 +36,25 @@ public class Main {
             int choice;
 
             try {
-                choice = sc.nextInt();
-                sc.nextLine();  // consume newline
-            } catch (Exception e) {
+                choice = Integer.parseInt(sc.nextLine().trim());
+            } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a number.");
-                sc.nextLine();  // clear invalid input
                 continue;
             }
 
             switch (choice) {
 
-                case 1 -> ProjectDAO.addProject();
+                case 1 -> ProjectDAO.addProject(sc);
 
                 case 2 -> ProjectDAO.viewAllProjects();
 
-                case 3 -> Scheduler.generateSchedule();
+                case 3 -> {
+                    if (confirmScheduleGeneration(sc)) {
+                        Scheduler.generateSchedule();
+                    } else {
+                        System.out.println("Schedule generation cancelled.");
+                    }
+                }
 
                 case 4 -> ProjectDAO.viewProjectsByStatus("SCHEDULED");
 
@@ -71,5 +75,16 @@ public class Main {
                 default -> System.out.println("Invalid choice. Try again.");
             }
         }
+    }
+
+    private static boolean confirmScheduleGeneration(Scanner sc) {
+        System.out.println("\nThis will:");
+        System.out.println("- Mark last week's scheduled projects as COMPLETED");
+        System.out.println("- Decrease pending project deadlines by 7 days");
+        System.out.println("- Generate and save a new weekly schedule");
+        System.out.print("Continue? (y/n): ");
+
+        String answer = sc.nextLine().trim().toLowerCase();
+        return "y".equals(answer) || "yes".equals(answer);
     }
 }

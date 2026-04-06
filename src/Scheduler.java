@@ -1,304 +1,304 @@
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /*
  * Scheduler Class
  *
  * Responsibilities:
- * - Convert last week's SCHEDULED → COMPLETED
+ * - Convert last week's SCHEDULED -> COMPLETED
  * - Reduce deadlines weekly
  * - Apply predictive scoring
  * - Perform greedy scheduling
- * - Expire rejected urgent projects
+ * - Expire rejected and overdue projects
  * - Store weekly revenue
  */
 
 public class Scheduler {
 
-    // ===============================
-    // Internal Lightweight Project Model
-    // ===============================
-    static class Project {
-        int id;
-        String title;
-        int deadline;
-        int revenue;
-        double score;
-
-        Project(int id, String title, int deadline, int revenue) {
-            this.id = id;
-            this.title = title;
-            this.deadline = deadline;
-            this.revenue = revenue;
-        }
-    }
-
-    // ===============================
-    // MAIN SCHEDULER METHOD
-    // ===============================
     public static void generateSchedule() {
+        Connection con = null;
 
-        // STEP 0: Convert last week SCHEDULED → COMPLETED
-        markScheduledAsCompleted();
+        try {
+            con = DBConnection.getConnection();
+            con.setAutoCommit(false);
 
-        List<Project> projects = new ArrayList<>();
-        double expectedRevenue = predictNextWeekRevenue();
+            int completedCount = markScheduledAsCompleted(con);
+            int reducedCount = reduceDeadlinesByOneWeek(con);
+            int overdueExpiredCount = expireOverduePendingProjects(con);
+            double expectedRevenue = predictNextWeekRevenue(con);
 
-        // STEP 2: Fetch PENDING projects
-        String fetchSql =
-                "SELECT id, title, deadline, revenue FROM projects WHERE status = 'PENDING'";
+            List<Project> projects = fetchSchedulablePendingProjects(con);
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(fetchSql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-
-                int deadline = rs.getInt("deadline");
-                if (deadline <= 0) continue;
-
-                projects.add(new Project(
-                        rs.getInt("id"),
-                        rs.getString("title"),
-                        deadline,
-                        rs.getInt("revenue")
-                ));
+            if (projects.isEmpty()) {
+                con.commit();
+                System.out.println("No schedulable projects this week.");
+                printWeekSummary(0, expectedRevenue, completedCount, reducedCount, 0, overdueExpiredCount, 0);
+                return;
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            scoreProjects(projects, expectedRevenue);
+            projects.sort(Comparator.comparingDouble(Project::getScore).reversed());
 
-        if (projects.isEmpty()) {
-            System.out.println("No schedulable projects.");
-            return;
-        }
+            Project[] week = new Project[SchedulingConfig.DAYS_PER_WEEK];
+            List<Integer> scheduledIds = new ArrayList<>();
+            List<Project> rejectedProjects = new ArrayList<>();
+            int totalRevenue = 0;
 
-        // STEP 3: Predictive Scoring
-        for (Project p : projects) {
+            for (Project p : projects) {
+                int lastDay = Math.min(p.getDeadline(), SchedulingConfig.DAYS_PER_WEEK) - 1;
+                boolean assigned = false;
 
-            double urgency = 1.0 / Math.max(p.deadline, 1);
-            int futurePenalty = 0;
+                for (int day = lastDay; day >= 0; day--) {
+                    if (week[day] == null) {
+                        week[day] = p;
+                        scheduledIds.add(p.getId());
+                        totalRevenue += p.getRevenue();
+                        assigned = true;
+                        break;
+                    }
+                }
 
-            // Penalize low-value long-deadline projects slightly
-            if (p.deadline > 5 && p.revenue < expectedRevenue * 0.5) {
-                futurePenalty = 1;
-            }
-
-            p.score =
-                    (0.5 * p.revenue)
-                            + (0.3 * urgency * 5000)
-                            - (0.2 * futurePenalty * p.revenue);
-        }
-
-        // Sort by score descending
-        projects.sort((a, b) -> Double.compare(b.score, a.score));
-
-        // STEP 4: Greedy Scheduling
-        Project[] week = new Project[5];
-        int totalRevenue = 0;
-
-        List<Integer> scheduledIds = new ArrayList<>();
-        List<Project> rejectedProjects = new ArrayList<>();
-
-        for (Project p : projects) {
-
-            int lastDay = Math.min(p.deadline, 5) - 1;
-            boolean assigned = false;
-
-            for (int d = lastDay; d >= 0; d--) {
-                if (week[d] == null) {
-                    week[d] = p;
-                    totalRevenue += p.revenue;
-                    scheduledIds.add(p.id);
-                    assigned = true;
-                    break;
+                if (!assigned) {
+                    rejectedProjects.add(p);
                 }
             }
 
-            if (!assigned) {
-                rejectedProjects.add(p);
+            int rejectedExpiredCount = expireRejectedUrgentProjects(con, rejectedProjects);
+            int scheduledCount = updateProjectStatusBatch(con, scheduledIds);
+            storeWeeklyRevenue(con, totalRevenue);
+
+            con.commit();
+
+            displaySchedule(week, totalRevenue, expectedRevenue);
+            printWeekSummary(totalRevenue, expectedRevenue, completedCount, reducedCount, scheduledCount,
+                    overdueExpiredCount, rejectedExpiredCount);
+
+        } catch (SQLException e) {
+            rollbackQuietly(con);
+            System.out.println("Schedule generation failed: " + e.getMessage());
+        } finally {
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException ignored) {
+                    // Ignore cleanup errors.
+                }
+            }
+        }
+    }
+
+    private static void scoreProjects(List<Project> projects, double expectedRevenue) {
+        for (Project p : projects) {
+            double urgency = 1.0 / Math.max(p.getDeadline(), 1);
+            int futurePenalty = 0;
+
+            if (p.getDeadline() > SchedulingConfig.LONG_DEADLINE_THRESHOLD_DAYS
+                    && p.getRevenue() < expectedRevenue * SchedulingConfig.LOW_VALUE_REVENUE_MULTIPLIER) {
+                futurePenalty = 1;
+            }
+
+            double score =
+                    (SchedulingConfig.REVENUE_WEIGHT * p.getRevenue())
+                            + (SchedulingConfig.URGENCY_WEIGHT * urgency * SchedulingConfig.URGENCY_MULTIPLIER)
+                            - (SchedulingConfig.PENALTY_WEIGHT * futurePenalty * p.getRevenue());
+
+            p.setScore(score);
+        }
+    }
+
+    private static List<Project> fetchSchedulablePendingProjects(Connection con) throws SQLException {
+        List<Project> projects = new ArrayList<>();
+
+        String sql = "SELECT id, project_code, title, deadline, revenue, status "
+                + "FROM projects WHERE status = ? AND deadline > 0";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, ProjectStatus.PENDING.name());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    projects.add(new Project(
+                            rs.getInt("id"),
+                            rs.getString("project_code"),
+                            rs.getString("title"),
+                            rs.getInt("deadline"),
+                            rs.getInt("revenue"),
+                            rs.getString("status")
+                    ));
+                }
             }
         }
 
-        // STEP 5: Expire urgent rejected projects
-        expireRejectedUrgentProjects(rejectedProjects);
-
-        // STEP 6: Mark selected projects as SCHEDULED
-        updateProjectStatusBatch(scheduledIds);
-
-        // STEP 7: Store weekly revenue
-        storeWeeklyRevenue(totalRevenue);
-
-        // STEP 8: Display schedule
-        displaySchedule(week, totalRevenue, expectedRevenue);
+        return projects;
     }
 
-    // ==========================================
-    // Convert SCHEDULED → COMPLETED
-    // ==========================================
-    private static void markScheduledAsCompleted() {
+    private static int markScheduledAsCompleted(Connection con) throws SQLException {
+        String sql = "UPDATE projects SET status = ? WHERE status = ?";
 
-        String sql =
-                "UPDATE projects SET status = 'COMPLETED' WHERE status = 'SCHEDULED'";
-
-        try (Connection con = DBConnection.getConnection();
-             Statement st = con.createStatement()) {
-
-            st.executeUpdate(sql);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, ProjectStatus.COMPLETED.name());
+            ps.setString(2, ProjectStatus.SCHEDULED.name());
+            return ps.executeUpdate();
         }
     }
 
-    // ==========================================
-    // Reduce deadlines by 7 days
-    // ==========================================
-    private static void reduceDeadlinesByOneWeek() {
+    private static int reduceDeadlinesByOneWeek(Connection con) throws SQLException {
+        String sql = "UPDATE projects SET deadline = deadline - ? WHERE status = ?";
 
-        String sql =
-                "UPDATE projects SET deadline = deadline - 7 WHERE status = 'PENDING'";
-
-        try (Connection con = DBConnection.getConnection();
-             Statement st = con.createStatement()) {
-
-            st.executeUpdate(sql);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, SchedulingConfig.DAYS_DECREASE_PER_WEEK);
+            ps.setString(2, ProjectStatus.PENDING.name());
+            return ps.executeUpdate();
         }
     }
 
-    // ==========================================
-    // Expire rejected urgent projects
-    // ==========================================
-    private static void expireRejectedUrgentProjects(List<Project> rejectedProjects) {
+    private static int expireOverduePendingProjects(Connection con) throws SQLException {
+        String sql = "UPDATE projects SET status = ? WHERE status = ? AND deadline <= 0";
 
-        String sql =
-                "UPDATE projects SET status = 'EXPIRED' WHERE id = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, ProjectStatus.EXPIRED.name());
+            ps.setString(2, ProjectStatus.PENDING.name());
+            return ps.executeUpdate();
+        }
+    }
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+    private static int expireRejectedUrgentProjects(Connection con, List<Project> rejectedProjects) throws SQLException {
+        String sql = "UPDATE projects SET status = ? WHERE id = ?";
 
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             for (Project p : rejectedProjects) {
-
-                if (p.deadline <= 5) {
-                    ps.setInt(1, p.id);
+                if (p.getDeadline() <= SchedulingConfig.DAYS_PER_WEEK) {
+                    ps.setString(1, ProjectStatus.EXPIRED.name());
+                    ps.setInt(2, p.getId());
                     ps.addBatch();
                 }
             }
 
-            ps.executeBatch();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            int[] batch = ps.executeBatch();
+            return successfulBatchCount(batch);
         }
     }
 
-    // ==========================================
-    // Batch Update Status to SCHEDULED
-    // ==========================================
-    private static void updateProjectStatusBatch(List<Integer> ids) {
+    private static int updateProjectStatusBatch(Connection con, List<Integer> ids) throws SQLException {
+        if (ids.isEmpty()) {
+            return 0;
+        }
 
-        if (ids.isEmpty()) return;
+        String sql = "UPDATE projects SET status = ? WHERE id = ?";
 
-        String sql =
-                "UPDATE projects SET status = 'SCHEDULED' WHERE id = ?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             for (int id : ids) {
-                ps.setInt(1, id);
+                ps.setString(1, ProjectStatus.SCHEDULED.name());
+                ps.setInt(2, id);
                 ps.addBatch();
             }
 
-            ps.executeBatch();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            int[] batch = ps.executeBatch();
+            return successfulBatchCount(batch);
         }
     }
 
-    // ==========================================
-    // Store Weekly Revenue
-    // ==========================================
-    private static void storeWeeklyRevenue(int revenue) {
+    private static int successfulBatchCount(int[] batch) {
+        int count = 0;
+        for (int result : batch) {
+            if (result >= 0 || result == Statement.SUCCESS_NO_INFO) {
+                count++;
+            }
+        }
+        return count;
+    }
 
-        String sql =
-                "INSERT INTO weekly_revenue_history(total_revenue) VALUES (?)";
+    private static void storeWeeklyRevenue(Connection con, int revenue) throws SQLException {
+        String sql = "INSERT INTO weekly_revenue_history(total_revenue) VALUES (?)";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, revenue);
             ps.executeUpdate();
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-    // ==========================================
-    // Weighted Moving Average Revenue Prediction
-    // ==========================================
-    private static double predictNextWeekRevenue() {
-
+    private static double predictNextWeekRevenue(Connection con) throws SQLException {
         List<Integer> revenues = new ArrayList<>();
 
-        String sql =
-                "SELECT total_revenue FROM weekly_revenue_history " +
-                        "ORDER BY week_no DESC LIMIT 3";
+        String sql = "SELECT total_revenue FROM weekly_revenue_history ORDER BY week_no DESC LIMIT 3";
 
-        try (Connection con = DBConnection.getConnection();
-             Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 revenues.add(rs.getInt("total_revenue"));
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
-        if (revenues.isEmpty())
+        if (revenues.isEmpty()) {
             return 0;
+        }
 
-        if (revenues.size() == 1)
+        if (revenues.size() == 1) {
             return revenues.get(0);
+        }
 
-        if (revenues.size() == 2)
+        if (revenues.size() == 2) {
             return (revenues.get(0) + revenues.get(1)) / 2.0;
+        }
 
-        return 0.5 * revenues.get(0)
-                + 0.3 * revenues.get(1)
-                + 0.2 * revenues.get(2);
+        return (SchedulingConfig.MOST_RECENT_REVENUE_WEIGHT * revenues.get(0))
+                + (SchedulingConfig.SECOND_RECENT_REVENUE_WEIGHT * revenues.get(1))
+                + (SchedulingConfig.THIRD_RECENT_REVENUE_WEIGHT * revenues.get(2));
     }
 
-    // ==========================================
-    // Display Weekly Schedule
-    // ==========================================
-    private static void displaySchedule(Project[] week,
-                                        int totalRevenue,
-                                        double expectedRevenue) {
-
-        String[] days =
-                {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+    private static void displaySchedule(Project[] week, int totalRevenue, double expectedRevenue) {
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 
         System.out.println("\n=========================================");
-        System.out.println("Expected Next Week Revenue: " + expectedRevenue);
+        System.out.println("Expected Next Week Revenue: " + String.format("%.2f", expectedRevenue));
         System.out.println("=========================================");
 
         System.out.println("\nWeekly Schedule:");
-
-        for (int i = 0; i < 5; i++) {
-            System.out.println(days[i] + " : " +
-                    (week[i] != null ? week[i].title : "No Project"));
+        for (int i = 0; i < SchedulingConfig.DAYS_PER_WEEK; i++) {
+            Project p = week[i];
+            String label = (p != null)
+                    ? p.getTitle() + " (" + p.getProjectCode() + ")"
+                    : "No Project";
+            System.out.println(days[i] + " : " + label);
         }
 
         System.out.println("\nTotal Revenue: " + totalRevenue);
         System.out.println("=========================================");
+    }
+
+    private static void printWeekSummary(int totalRevenue,
+                                         double expectedRevenue,
+                                         int completedCount,
+                                         int reducedCount,
+                                         int scheduledCount,
+                                         int overdueExpiredCount,
+                                         int rejectedExpiredCount) {
+        System.out.println("\nWeek Summary");
+        System.out.println("- Completed from previous week: " + completedCount);
+        System.out.println("- Pending deadlines reduced: " + reducedCount);
+        System.out.println("- Newly scheduled: " + scheduledCount);
+        System.out.println("- Expired due to overdue deadline: " + overdueExpiredCount);
+        System.out.println("- Expired after rejection this week: " + rejectedExpiredCount);
+        System.out.println("- Expected revenue baseline: " + String.format("%.2f", expectedRevenue));
+        System.out.println("- Realized weekly revenue: " + totalRevenue);
+    }
+
+    private static void rollbackQuietly(Connection con) {
+        if (con == null) {
+            return;
+        }
+
+        try {
+            con.rollback();
+        } catch (SQLException ignored) {
+            // Ignore rollback errors.
+        }
     }
 }

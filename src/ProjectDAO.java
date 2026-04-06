@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.util.Locale;
 import java.util.Scanner;
 
 /*
@@ -17,46 +18,34 @@ public class ProjectDAO {
     // =====================================
     // ADD NEW PROJECT
     // =====================================
-    public static void addProject() {
+    public static void addProject(Scanner sc) {
 
-        Scanner sc = new Scanner(System.in);
+        String title = promptTitle(sc);
+        int deadline = promptPositiveInt(sc, "Enter deadline (calendar days): ");
+        int revenue = promptPositiveInt(sc, "Enter revenue: ");
 
-        System.out.print("Enter project title: ");
-        String title = sc.nextLine();
-
-        System.out.print("Enter deadline (calendar days): ");
-        int deadline = sc.nextInt();
-
-        System.out.print("Enter revenue: ");
-        int revenue = sc.nextInt();
-
-        String getSeqSql = "SELECT nextval('projects_id_seq')";
         String insertSql =
-                "INSERT INTO projects(project_code, title, deadline, revenue, status) VALUES (?, ?, ?, ?, ?)";
+                "INSERT INTO projects(project_code, title, deadline, revenue, status) " +
+                        "VALUES ('Proj' || LPAD(nextval('projects_id_seq')::text, 3, '0'), ?, ?, ?, ?) " +
+                        "RETURNING project_code";
 
         try (Connection con = DBConnection.getConnection();
-             Statement seqStmt = con.createStatement();
-             ResultSet rs = seqStmt.executeQuery(getSeqSql)) {
+             PreparedStatement ps = con.prepareStatement(insertSql)) {
 
-            rs.next();
-            int seqValue = rs.getInt(1);
+            ps.setString(1, title);
+            ps.setInt(2, deadline);
+            ps.setInt(3, revenue);
+            ps.setString(4, ProjectStatus.PENDING.name());
 
-            String projectCode = String.format("Proj%03d", seqValue);
-
-            try (PreparedStatement ps = con.prepareStatement(insertSql)) {
-                ps.setString(1, projectCode);
-                ps.setString(2, title);
-                ps.setInt(3, deadline);
-                ps.setInt(4, revenue);
-                ps.setString(5, "PENDING");
-                ps.executeUpdate();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    System.out.println("Project added successfully.");
+                    System.out.println("Assigned Project Code: " + rs.getString("project_code"));
+                }
             }
 
-            System.out.println("Project added successfully.");
-            System.out.println("Assigned Project Code: " + projectCode);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            System.out.println("Failed to add project: " + e.getMessage());
         }
     }
 
@@ -88,8 +77,8 @@ public class ProjectDAO {
 
             printProjectTableFooter();
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            System.out.println("Failed to fetch projects: " + e.getMessage());
         }
     }
 
@@ -98,35 +87,44 @@ public class ProjectDAO {
     // =====================================
     public static void viewProjectsByStatus(String status) {
 
+        if (!ProjectStatus.isValid(status)) {
+            System.out.println("Invalid status filter: " + status);
+            return;
+        }
+
+        String normalizedStatus = status.toUpperCase(Locale.ROOT);
+
         String sql =
                 "SELECT id, project_code, title, deadline, revenue, status " +
                         "FROM projects WHERE status = ? ORDER BY id";
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql);
+             ) {
 
-            ps.setString(1, status);
-            ResultSet rs = ps.executeQuery();
+            ps.setString(1, normalizedStatus);
 
-            System.out.println("\nProjects with status: " + status);
+            System.out.println("\nProjects with status: " + normalizedStatus);
 
-            printProjectTableHeader();
+            try (ResultSet rs = ps.executeQuery()) {
+                printProjectTableHeader();
 
-            boolean empty = true;
+                boolean empty = true;
 
-            while (rs.next()) {
-                empty = false;
-                printProjectRow(rs);
+                while (rs.next()) {
+                    empty = false;
+                    printProjectRow(rs);
+                }
+
+                if (empty) {
+                    System.out.println("No projects found.");
+                }
+
+                printProjectTableFooter();
             }
 
-            if (empty) {
-                System.out.println("No projects found.");
-            }
-
-            printProjectTableFooter();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            System.out.println("Failed to filter projects: " + e.getMessage());
         }
     }
 
@@ -163,8 +161,8 @@ public class ProjectDAO {
 
             System.out.println("----------------------------------------------------");
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            System.out.println("Failed to load revenue history: " + e.getMessage());
         }
     }
 
@@ -185,8 +183,8 @@ public class ProjectDAO {
                 System.out.println(rows + " project(s) marked as COMPLETED.");
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            System.out.println("Failed to mark scheduled projects as completed: " + e.getMessage());
         }
     }
 
@@ -214,5 +212,32 @@ public class ProjectDAO {
 
     private static void printProjectTableFooter() {
         System.out.println("----------------------------------------------------------------------------");
+    }
+
+    private static String promptTitle(Scanner sc) {
+        while (true) {
+            System.out.print("Enter project title: ");
+            String title = sc.nextLine();
+            try {
+                return InputValidator.requireNonBlank("title", title);
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    private static int promptPositiveInt(Scanner sc, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String raw = sc.nextLine().trim();
+            try {
+                int value = Integer.parseInt(raw);
+                return InputValidator.requirePositive("value", value);
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid whole number.");
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        }
     }
 }
