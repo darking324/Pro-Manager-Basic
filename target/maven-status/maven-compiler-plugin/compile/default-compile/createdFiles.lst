@@ -1,0 +1,15 @@
+SchedulingConfig.class
+WebMain$AuthUser.class
+WebMain$TaskInput.class
+Scheduler.class
+WebMain$TaskPayload.class
+DBConfig.class
+Project.class
+WebMain.class
+ProjectDAO.class
+DBConnection.class
+WebMain$LoginRequest.class
+Main.class
+WebMain$SignupRequest.class
+InputValidator.class
+ProjectStatus.class
