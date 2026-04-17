@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="InputValidatorTest" time="0.036" tests="5" errors="0" skipped="0" failures="0">
+  <properties>
+    <property name="java.specification.version" value="21"/>
+    <property name="sun.cpu.isalist" value="amd64"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.class.path" value="C:\Users\abhis\OneDrive\Desktop\AI_projects\ProManageBasic\target\test-classes;C:\Users\abhis\OneDrive\Desktop\AI_projects\ProManageBasic\target\classes;C:\Users\abhis\.m2\repository\org\postgresql\postgresql\42.7.7\postgresql-42.7.7.jar;C:\Users\abhis\.m2\repository\org\checkerframework\checker-qual\3.49.3\checker-qual-3.49.3.jar;C:\Users\abhis\.m2\repository\com\sparkjava\spark-core\2.9.4\spark-core-2.9.4.jar;C:\Users\abhis\.m2\repository\org\slf4j\slf4j-api\1.7.25\slf4j-api-1.7.25.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-server\9.4.48.v20220622\jetty-server-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\javax\servlet\javax.servlet-api\3.1.0\javax.servlet-api-3.1.0.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-http\9.4.48.v20220622\jetty-http-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-util\9.4.48.v20220622\jetty-util-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-io\9.4.48.v20220622\jetty-io-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-webapp\9.4.48.v20220622\jetty-webapp-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-xml\9.4.48.v20220622\jetty-xml-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-servlet\9.4.48.v20220622\jetty-servlet-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-security\9.4.48.v20220622\jetty-security-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-util-ajax\9.4.48.v20220622\jetty-util-ajax-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-server\9.4.48.v20220622\websocket-server-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-common\9.4.48.v20220622\websocket-common-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-client\9.4.48.v20220622\websocket-client-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-client\9.4.48.v20220622\jetty-client-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-servlet\9.4.48.v20220622\websocket-servlet-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-api\9.4.48.v20220622\websocket-api-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\com\google\code\gson\gson\2.11.0\gson-2.11.0.jar;C:\Users\abhis\.m2\repository\com\google\errorprone\error_prone_annotations\2.27.0\error_prone_annotations-2.27.0.jar;C:\Users\abhis\.m2\repository\org\mindrot\jbcrypt\0.4\jbcrypt-0.4.jar;C:\Users\abhis\.m2\repository\org\slf4j\slf4j-simple\2.0.16\slf4j-simple-2.0.16.jar;C:\Users\abhis\.m2\repository\org\junit\jupiter\junit-jupiter\5.11.1\junit-jupiter-5.11.1.jar;C:\Users\abhis\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.11.1\junit-jupiter-api-5.11.1.jar;C:\Users\abhis\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\abhis\.m2\repository\org\junit\platform\junit-platform-commons\1.11.1\junit-platform-commons-1.11.1.jar;C:\Users\abhis\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\abhis\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.11.1\junit-jupiter-params-5.11.1.jar;C:\Users\abhis\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.11.1\junit-jupiter-engine-5.11.1.jar;C:\Users\abhis\.m2\repository\org\junit\platform\junit-platform-engine\1.11.1\junit-platform-engine-1.11.1.jar;"/>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="user.variant" value=""/>
+    <property name="java.vendor.url" value="https://java.oracle.com/"/>
+    <property name="user.timezone" value="Asia/Calcutta"/>
+    <property name="os.name" value="Windows 11"/>
+    <property name="java.vm.specification.version" value="21"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-21\bin"/>
+    <property name="sun.java.command" value="C:\Users\abhis\AppData\Local\Temp\surefire6317085964348643243\surefirebooter-20260413125835432_3.jar C:\Users\abhis\AppData\Local\Temp\surefire6317085964348643243 2026-04-13T12-58-35_359-jvmRun1 surefire-20260413125835432_1tmp surefire_0-20260413125835432_2tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="surefire.test.class.path" value="C:\Users\abhis\OneDrive\Desktop\AI_projects\ProManageBasic\target\test-classes;C:\Users\abhis\OneDrive\Desktop\AI_projects\ProManageBasic\target\classes;C:\Users\abhis\.m2\repository\org\postgresql\postgresql\42.7.7\postgresql-42.7.7.jar;C:\Users\abhis\.m2\repository\org\checkerframework\checker-qual\3.49.3\checker-qual-3.49.3.jar;C:\Users\abhis\.m2\repository\com\sparkjava\spark-core\2.9.4\spark-core-2.9.4.jar;C:\Users\abhis\.m2\repository\org\slf4j\slf4j-api\1.7.25\slf4j-api-1.7.25.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-server\9.4.48.v20220622\jetty-server-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\javax\servlet\javax.servlet-api\3.1.0\javax.servlet-api-3.1.0.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-http\9.4.48.v20220622\jetty-http-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-util\9.4.48.v20220622\jetty-util-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-io\9.4.48.v20220622\jetty-io-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-webapp\9.4.48.v20220622\jetty-webapp-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-xml\9.4.48.v20220622\jetty-xml-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-servlet\9.4.48.v20220622\jetty-servlet-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-security\9.4.48.v20220622\jetty-security-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-util-ajax\9.4.48.v20220622\jetty-util-ajax-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-server\9.4.48.v20220622\websocket-server-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-common\9.4.48.v20220622\websocket-common-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-client\9.4.48.v20220622\websocket-client-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\jetty-client\9.4.48.v20220622\jetty-client-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-servlet\9.4.48.v20220622\websocket-servlet-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\org\eclipse\jetty\websocket\websocket-api\9.4.48.v20220622\websocket-api-9.4.48.v20220622.jar;C:\Users\abhis\.m2\repository\com\google\code\gson\gson\2.11.0\gson-2.11.0.jar;C:\Users\abhis\.m2\repository\com\google\errorprone\error_prone_annotations\2.27.0\error_prone_annotations-2.27.0.jar;C:\Users\abhis\.m2\repository\org\mindrot\jbcrypt\0.4\jbcrypt-0.4.jar;C:\Users\abhis\.m2\repository\org\slf4j\slf4j-simple\2.0.16\slf4j-simple-2.0.16.jar;C:\Users\abhis\.m2\repository\org\junit\jupiter\junit-jupiter\5.11.1\junit-jupiter-5.11.1.jar;C:\Users\abhis\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.11.1\junit-jupiter-api-5.11.1.jar;C:\Users\abhis\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\abhis\.m2\repository\org\junit\platform\junit-platform-commons\1.11.1\junit-platform-commons-1.11.1.jar;C:\Users\abhis\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\abhis\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.11.1\junit-jupiter-params-5.11.1.jar;C:\Users\abhis\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.11.1\junit-jupiter-engine-5.11.1.jar;C:\Users\abhis\.m2\repository\org\junit\platform\junit-platform-engine\1.11.1\junit-platform-engine-1.11.1.jar;"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="C:\Users\abhis"/>
+    <property name="user.language" value="en"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2025-10-21"/>
+    <property name="java.home" value="C:\Program Files\Java\jdk-21"/>
+    <property name="file.separator" value="\"/>
+    <property name="basedir" value="C:\Users\abhis\OneDrive\Desktop\AI_projects\ProManageBasic"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="surefire.real.class.path" value="C:\Users\abhis\AppData\Local\Temp\surefire6317085964348643243\surefirebooter-20260413125835432_3.jar"/>
+    <property name="user.script" value=""/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="21.0.9+7-LTS-338"/>
+    <property name="user.name" value="abhis"/>
+    <property name="stdout.encoding" value="UTF-8"/>
+    <property name="path.separator" value=";"/>
+    <property name="os.version" value="10.0"/>
+    <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.vm.name" value="Java HotSpot(TM) 64-Bit Server VM"/>
+    <property name="localRepository" value="C:\Users\abhis\.m2\repository"/>
+    <property name="java.vendor.url.bug" value="https://bugreport.java.com/bugreport/"/>
+    <property name="java.io.tmpdir" value="C:\Users\abhis\AppData\Local\Temp\"/>
+    <property name="java.version" value="21.0.9"/>
+    <property name="user.dir" value="C:\Users\abhis\OneDrive\Desktop\AI_projects\ProManageBasic"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="sun.os.patch.level" value=""/>
+    <property name="native.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="C:\Program Files\Java\jdk-21\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;c:\Users\abhis\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\debugCommand;c:\Users\abhis\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\copilotCli;C:\Users\abhis\AppData\Local\Programs\Microsoft VS Code;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\MinGW\bin;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\Program Files\nodejs\;C:\Program Files\Java\jdk-21\bin;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\flutter\bin;C:\Users\abhis\AppData\Local\Programs\Python\Python311\Scripts\;C:\Users\abhis\AppData\Local\Programs\Python\Python311\;C:\Users\abhis\AppData\Local\Microsoft\WindowsApps;C:\Users\abhis\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\abhis\AppData\Roaming\npm;C:\src\jdk-25.0.1\bin;C:\Users\abhis\AppData\Local\Programs\Antigravity\bin;C:\Users\abhis\AppData\Local\Programs\Ollama;C:\Program Files\JetBrains\IntelliJ IDEA 2025.3.4\bin;C:\flutter\bin;C:\flutter\flutter\bin;c:\Users\abhis\.vscode\extensions\vscjava.vscode-java-debug-0.58.5\bundled\scripts\noConfigScripts;."/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="stderr.encoding" value="UTF-8"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="java.vm.version" value="21.0.9+7-LTS-338"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="65.0"/>
+  </properties>
+  <testcase name="requirePositiveReturnsInputForPositiveNumber" classname="InputValidatorTest" time="0.012"/>
+  <testcase name="requireNonBlankReturnsTrimmedValue" classname="InputValidatorTest" time="0.001"/>
+  <testcase name="requireNonBlankUsesDefaultLabelForBlankFieldName" classname="InputValidatorTest" time="0.001"/>
+  <testcase name="requirePositiveThrowsForNonPositiveNumber" classname="InputValidatorTest" time="0.008"/>
+  <testcase name="requireNonBlankThrowsForNullValue" classname="InputValidatorTest" time="0.0"/>
+</testsuite>
