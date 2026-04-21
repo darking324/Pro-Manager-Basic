@@ -1,219 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProManage Workspace</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProManage — Redirecting...</title>
+  <script>
+    // Redirect to the Stitch UI: login if no token, kanban if logged in
+    if (localStorage.getItem('pm_token')) {
+      window.location.replace('/dashboard.html');
+    } else {
+      window.location.replace('/login.html');
+    }
+  </script>
+  <style>
+    body { background: #0b1326; color: #dae2fd; font-family: Inter, sans-serif;
+           display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+  </style>
 </head>
 <body>
-<div class="bg-layer"></div>
-<div class="grain"></div>
-
-<div id="app-root">
-    <section id="auth-view" class="auth-view hidden">
-        <div class="auth-panel reveal">
-            <div class="brand-block">
-                <p class="eyebrow">Operational Control</p>
-                <h1>ProManage</h1>
-                <p class="subtitle">A dynamic planning cockpit for delivery teams.</p>
-            </div>
-
-            <div id="auth-error" class="inline-error hidden"></div>
-
-            <form id="login-form" class="auth-form">
-                <h2>Sign In</h2>
-                <label>Email
-                    <input type="email" name="email" placeholder="you@company.com" required>
-                </label>
-                <label>Password
-                    <input type="password" name="password" placeholder="Your password" minlength="6" required>
-                </label>
-                <button type="submit" class="btn-primary">Login</button>
-                <p>New here? <button type="button" class="link-button" id="show-signup">Create account</button></p>
-            </form>
-
-            <form id="signup-form" class="auth-form hidden">
-                <h2>Create Account</h2>
-                <label>Name
-                    <input type="text" name="name" placeholder="Ariana Patel" required>
-                </label>
-                <label>Email
-                    <input type="email" name="email" placeholder="you@company.com" required>
-                </label>
-                <label>Password
-                    <input type="password" name="password" placeholder="At least 6 characters" minlength="6" required>
-                </label>
-                <button type="submit" class="btn-primary">Sign Up</button>
-                <p>Already have access? <button type="button" class="link-button" id="show-login">Back to login</button></p>
-            </form>
-        </div>
-    </section>
-
-    <section id="workspace-view" class="workspace-view hidden">
-        <aside class="sidebar reveal">
-            <div class="logo-wrap">
-                <div class="logo-badge">PM</div>
-                <div>
-                    <h2>ProManage</h2>
-                    <p>Task command center</p>
-                </div>
-            </div>
-            <nav class="menu" id="sidebar-menu">
-                <button class="menu-item active" data-section="dashboard">Dashboard</button>
-                <button class="menu-item" data-section="tasks">Tasks</button>
-                <button class="menu-item" data-section="profile">Profile</button>
-                <button class="menu-item danger" data-action="logout">Logout</button>
-            </nav>
-            <div class="sidebar-foot">
-                <p>Plan boldly, execute calmly.</p>
-            </div>
-        </aside>
-
-        <main class="content-area">
-            <header class="topbar reveal">
-                <div>
-                    <h1 id="view-title">Dashboard</h1>
-                    <p id="view-subtitle">Realtime project pulse and priorities</p>
-                </div>
-                <div class="topbar-actions">
-                    <label class="search-wrap">
-                        <input type="search" id="global-search" placeholder="Search tasks by title or description">
-                    </label>
-                    <button class="icon-btn" id="notification-btn" aria-label="Notifications">
-                        <span>Alerts</span>
-                        <strong id="notif-count">0</strong>
-                    </button>
-                    <div class="user-chip" id="user-chip">Guest</div>
-                </div>
-            </header>
-
-            <section id="dashboard-section" class="view-section">
-                <div id="stats-grid" class="stats-grid"></div>
-                <div class="panel">
-                    <div class="panel-head">
-                        <h3>Revenue Trend</h3>
-                    </div>
-                    <div id="revenue-trend" class="trend-list"></div>
-                </div>
-            </section>
-
-            <section id="tasks-section" class="view-section hidden">
-                <div class="tasks-head">
-                    <div class="filter-row">
-                        <select id="filter-status">
-                            <option value="">All Status</option>
-                            <option value="todo">To-Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                        </select>
-                        <select id="filter-priority">
-                            <option value="">All Priority</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                        <input type="date" id="filter-from" aria-label="From date">
-                        <input type="date" id="filter-to" aria-label="To date">
-                        <button id="clear-filters" class="btn-ghost">Reset</button>
-                    </div>
-                    <button id="new-task-btn" class="btn-primary">Create Task</button>
-                </div>
-
-                <div id="task-board" class="task-board">
-                    <div class="board-column" data-status="todo">
-                        <h3>To-Do</h3>
-                        <div class="drop-zone" id="col-todo"></div>
-                    </div>
-                    <div class="board-column" data-status="in_progress">
-                        <h3>In Progress</h3>
-                        <div class="drop-zone" id="col-in_progress"></div>
-                    </div>
-                    <div class="board-column" data-status="completed">
-                        <h3>Completed</h3>
-                        <div class="drop-zone" id="col-completed"></div>
-                    </div>
-                </div>
-                <div id="tasks-empty" class="empty-state hidden">
-                    <h3>No tasks found</h3>
-                    <p>Create one to start planning your week.</p>
-                </div>
-                <div id="tasks-error" class="error-state hidden"></div>
-            </section>
-
-            <section id="profile-section" class="view-section hidden">
-                <div class="panel profile-card">
-                    <h3>Profile</h3>
-                    <p id="profile-name">Name</p>
-                    <p id="profile-email">Email</p>
-                    <p class="muted">Authenticated via secure token session.</p>
-                </div>
-            </section>
-        </main>
-    </section>
-</div>
-
-<div id="task-modal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-card">
-        <h3 id="task-modal-title">Create Task</h3>
-        <form id="task-form" class="task-form">
-            <input type="hidden" name="id">
-            <label>Title
-                <input type="text" name="title" required>
-            </label>
-            <label>Description
-                <textarea name="description" rows="3" placeholder="What needs to happen?"></textarea>
-            </label>
-            <div class="form-grid">
-                <label>Status
-                    <select name="status" required>
-                        <option value="todo">To-Do</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </label>
-                <label>Priority
-                    <select name="priority" required>
-                        <option value="low">Low</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="high">High</option>
-                    </select>
-                </label>
-                <label>Due Date
-                    <input type="date" name="dueDate" required>
-                </label>
-                <label>Revenue
-                    <input type="number" name="revenue" min="1" step="1" placeholder="40000" required>
-                </label>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-ghost" id="close-task-modal">Cancel</button>
-                <button type="submit" class="btn-primary" id="save-task-btn">Save Task</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="delete-modal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-card compact">
-        <h3>Delete task?</h3>
-        <p>This action cannot be undone.</p>
-        <div class="modal-actions">
-            <button id="cancel-delete" class="btn-ghost">Cancel</button>
-            <button id="confirm-delete" class="btn-danger">Delete</button>
-        </div>
-    </div>
-</div>
-
-<div id="loading-overlay" class="loading-overlay hidden">
-    <div class="spinner"></div>
-</div>
-
-<div id="toast-host" class="toast-host"></div>
-
-<script type="module" src="assets/js/app.js"></script>
+  <p>Loading ProManage...</p>
 </body>
 </html>

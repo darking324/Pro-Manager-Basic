@@ -31,3 +31,10 @@ src/main/resources/application.properties
 
 ### Mac OS ###
 .DS_Store
+
+### Build & deps ###
+target/
+apache-maven-3.9.6/
+.gemini/
+.idea/
+.vscode/

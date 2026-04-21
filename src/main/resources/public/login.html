@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ProManage | Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#adc6ff",
+          "on-primary": "#002e6a",
+          "surface": "#0b1326",
+          "surface-container": "#171f33",
+          "surface-container-low": "#131b2e",
+          "on-surface": "#dae2fd",
+          "on-surface-variant": "#c2c6d6",
+          "error": "#ffb4ab"
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #0b1326; color: #dae2fd; }
+  .glass { background: rgba(23, 31, 51, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(140, 144, 159, 0.1); }
+  .primary-btn { background: linear-gradient(135deg, #adc6ff 0%, #4d8eff 100%); color: #002e6a; }
+  input { background: rgba(45, 52, 73, 0.3) !important; border: 1px solid rgba(140, 144, 159, 0.2) !important; }
+  input:focus { border-color: #adc6ff !important; ring-color: #adc6ff !important; }
+  .hidden { display: none; }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+  
+  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+  <div class="w-full max-w-md z-10">
+    <div class="glass p-10 rounded-2xl shadow-2xl">
+      <div class="flex items-center gap-3 mb-8 justify-center">
+        <span class="material-symbols-outlined text-primary text-4xl">dashboard</span>
+        <h1 class="text-2xl font-black tracking-tighter">ProManage</h1>
+      </div>
+
+      <div id="error-banner" class="hidden mb-6 p-4 bg-error/10 border border-error/20 text-error text-sm rounded-xl"></div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="space-y-5">
+        <h2 class="text-2xl font-bold mb-2">Sign In</h2>
+        <p class="text-on-surface-variant text-sm mb-6">Enter your credentials to continue.</p>
+        
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1 ml-1">Email</label>
+          <input type="email" id="login-email" required placeholder="name@company.com" class="w-full rounded-xl px-4 py-4 text-white placeholder-gray-500 focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1 ml-1">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full rounded-xl px-4 py-4 text-white focus:outline-none"/>
+        </div>
+        <button type="submit" id="login-btn" class="w-full primary-btn py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all active:scale-[0.98] mt-4 flex justify-center items-center gap-2">
+          <span>Sign In</span>
+          <span class="material-symbols-outlined text-xl">arrow_forward</span>
+        </button>
+        <p class="text-center text-sm text-on-surface-variant mt-6">
+          New here? <button type="button" onclick="toggleAuth(true)" class="text-primary font-bold hover:underline">Create Account</button>
+        </p>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signup-form" class="space-y-5 hidden">
+        <h2 class="text-2xl font-bold mb-2">Join ProManage</h2>
+        <p class="text-on-surface-variant text-sm mb-6">Create an account for your team.</p>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1 ml-1">Full Name</label>
+          <input type="text" id="su-name" required placeholder="Alex Johnson" class="w-full rounded-xl px-4 py-4 text-white focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1 ml-1">Email</label>
+          <input type="email" id="su-email" required placeholder="name@company.com" class="w-full rounded-xl px-4 py-4 text-white focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1 ml-1">Password</label>
+          <input type="password" id="su-password" required placeholder="••••••••" minlength="6" class="w-full rounded-xl px-4 py-4 text-white focus:outline-none"/>
+        </div>
+        <button type="submit" id="signup-btn" class="w-full primary-btn py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all active:scale-[0.98] mt-4 flex justify-center items-center gap-2">
+          <span>Create Account</span>
+          <span class="material-symbols-outlined text-xl">person_add</span>
+        </button>
+        <p class="text-center text-sm text-on-surface-variant mt-6">
+          Have an account? <button type="button" onclick="toggleAuth(false)" class="text-primary font-bold hover:underline">Sign In</button>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/auth';
+
+    function toggleAuth(showSignup) {
+      document.getElementById('login-form').classList.toggle('hidden', showSignup);
+      document.getElementById('signup-form').classList.toggle('hidden', !showSignup);
+      hideError();
+    }
+
+    function showError(msg) {
+      const b = document.getElementById('error-banner');
+      b.textContent = msg;
+      b.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('error-banner').classList.add('hidden');
+    }
+
+    async function handleLogin(email, password) {
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('pm_token', data.data.token);
+        localStorage.setItem('pm_user', JSON.stringify(data.data.user));
+        window.location.href = '/dashboard.html';
+      } else {
+        showError(data.message || 'Login failed.');
+      }
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+      const b = document.getElementById('login-btn');
+      b.disabled = true;
+      b.querySelector('span').textContent = 'Signing in...';
+      
+      try {
+        await handleLogin(document.getElementById('login-email').value, document.getElementById('login-password').value);
+      } catch (err) {
+        showError('Cannot connect to server. Ensure backend is running.');
+      } finally {
+        b.disabled = false;
+        b.querySelector('span').textContent = 'Sign In';
+      }
+    });
+
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+      const b = document.getElementById('signup-btn');
+      const email = document.getElementById('su-email').value;
+      const password = document.getElementById('su-password').value;
+      const name = document.getElementById('su-name').value;
+
+      b.disabled = true;
+      b.querySelector('span').textContent = 'Creating account...';
+
+      try {
+        const res = await fetch(`${API}/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          // Auto-login
+          await handleLogin(email, password);
+        } else {
+          showError(data.message || 'Signup failed.');
+        }
+      } catch (err) {
+        showError('Cannot connect to server.');
+      } finally {
+        b.disabled = false;
+        b.querySelector('span').textContent = 'Create Account';
+      }
+    });
+
+    if (localStorage.getItem('pm_token')) window.location.href = '/dashboard.html';
+  </script>
+</body>
+</html>
