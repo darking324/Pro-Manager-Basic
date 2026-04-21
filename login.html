@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign In | ProManageBasic</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#2d3449",
+                    "on-primary-fixed": "#001a42",
+                    "on-tertiary": "#003824",
+                    "error": "#ffb4ab",
+                    "outline": "#8c909f",
+                    "on-error": "#690005",
+                    "surface-variant": "#2d3449",
+                    "tertiary": "#4edea3",
+                    "inverse-primary": "#005ac2",
+                    "inverse-on-surface": "#283044",
+                    "error-container": "#93000a",
+                    "on-primary": "#002e6a",
+                    "on-tertiary-container": "#00311f",
+                    "surface-container-low": "#131b2e",
+                    "surface-tint": "#adc6ff",
+                    "on-surface": "#dae2fd",
+                    "on-primary-container": "#00285d",
+                    "on-tertiary-fixed": "#002113",
+                    "on-secondary": "#182f59",
+                    "on-secondary-fixed": "#001a42",
+                    "surface-container-lowest": "#060e20",
+                    "surface-container": "#171f33",
+                    "on-secondary-fixed-variant": "#304671",
+                    "on-error-container": "#ffdad6",
+                    "primary": "#adc6ff",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "on-surface-variant": "#c2c6d6",
+                    "inverse-surface": "#dae2fd",
+                    "on-background": "#dae2fd",
+                    "primary-container": "#4d8eff",
+                    "primary-fixed-dim": "#adc6ff",
+                    "primary-fixed": "#d8e2ff",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "secondary-container": "#304671",
+                    "outline-variant": "#424754",
+                    "on-primary-fixed-variant": "#004395",
+                    "secondary-fixed": "#d8e2ff",
+                    "secondary-fixed-dim": "#b1c6f9",
+                    "tertiary-fixed": "#6ffbbe",
+                    "tertiary-container": "#00a572",
+                    "surface-dim": "#0b1326",
+                    "surface-bright": "#31394d",
+                    "secondary": "#b1c6f9",
+                    "background": "#0b1326",
+                    "surface": "#0b1326",
+                    "surface-container-high": "#222a3d",
+                    "on-secondary-container": "#9fb5e7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(45, 52, 73, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #adc6ff 0%, #4d8eff 100%);
+        }
+        .ghost-border {
+            border: 1px solid rgba(66, 71, 84, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface overflow-hidden">
+<main class="min-h-screen flex items-center justify-center relative p-6">
+<!-- Background Aesthetic Elements -->
+<div class="absolute inset-0 z-0">
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-tertiary/5 blur-[120px]"></div>
+<div class="w-full h-full opacity-20" data-alt="Smooth gradient flowing from deep slate to electric blue with subtle grain texture and cinematic lighting" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBcz05ETFKVvsQal2XT5puF1PYFFVjEM09Kg7U4vNs1sftqtls3jKjix4N5ihLXk1MQuln4zEHjcUxuNqJX-XF94LrXlL9L-Rc8N8GzYGaY6ZjtXkcHwMcDaqfGWt_Jwiu4QwWvxkwH8exfEzzUwZlySg-p6plq8yQSufLqHXSTLq26lzILiXyVORgU9718cO4tvTMy5BwTs0tWjorTLk5h1ZNjDr7k-aM0UE3kIYf54wJMyuE26c9hd7ijeJRon86G0USu4E067pzw'); background-size: cover; background-position: center;"></div>
+</div>
+<div class="z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 bg-surface-container-low/50 glass-panel rounded-full overflow-hidden shadow-2xl shadow-surface-container-lowest/40">
+<!-- Left Side: Visual/Branding Section -->
+<div class="hidden md:flex flex-col justify-between p-12 relative overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img alt="Enterprise Workspace" class="w-full h-full object-cover opacity-40 mix-blend-overlay" data-alt="Modern high-tech architectural interior with glass walls and dramatic blue evening light reflecting on polished surfaces" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC3fLExuuDY2AvfWiTPVFhHJgJIpe90guzhRUmqlpIzr6VERmb4B__gduzbq3Vd-ZJ32X76JaFQl_UfvjuOdU2Ng9BLHiT_1_ME1paIsJrXdB82IDgqwyeYWa2zMwtJgze-bro5CSBzdvZKIsFEBPH47WsgWPHHYf-jy_L7TnSQVKaTuxW9QP_ve5aBCn7ccPTMNXjNumdD2kh8JcAtelxEgedfN_0pizpayYddhdmLA--mpFCtoYDOmhhxGZebNW5bUcGX_HBhn6O"/>
+</div>
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-12">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="dashboard">dashboard</span>
+<h1 class="text-2xl font-black text-on-surface tracking-tighter">ProManage</h1>
+</div>
+<div class="space-y-4">
+<h2 class="text-5xl font-extrabold tracking-tight text-white leading-tight">
+                            Streamline <br/>
+<span class="text-primary">Enterprise</span> <br/>
+                            Workflows.
+                        </h2>
+<p class="text-on-surface-variant text-lg max-w-md font-light leading-relaxed">
+                            Experience the next evolution of project governance. Secure, scalable, and designed for high-performance teams.
+                        </p>
+</div>
+</div>
+<div class="relative z-10 flex items-center gap-4">
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full border-2 border-surface-container-highest object-cover" data-alt="Portrait of professional executive man in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXbao4-ui6F8qRR9CgI5AhChw-jjSwb8gOYpMHohwy60I8y2-2auYQD_idtcNOT3PNmovY6z06Cv9t6ebPCbDgriFST64vV0V74_-MYHqN3eoDlPeZiOjn4ZgZMtl_5SqayBKtuqoyPyTuPuxx0Hbuq6zGDmzyVGT_n-uw3ct2R6y6e9ggXfC551F0lt1VeSAfZ5jgbER7ekoY0vT1VRx19x3PXXUtQkc-zBIbvRnKZNFsZr14CpWJJJQ0f4iVVJAqT1iRwwAAI3o3"/>
+<img class="w-10 h-10 rounded-full border-2 border-surface-container-highest object-cover" data-alt="Portrait of business woman smiling in professional attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb4ADv_s7Z5hjttc0-B4bMn3o-7PYaYBJP-noKFzARjU5Z59icNoiqTRFmHEBpx3TQEvrS5ZoK4nLNYXhfsqZ3eaBuBoZFEGICYBrwALxX0GRFjq8w4UHfsWFCEQACVIfwM99DEmyoFbVFYFqWV34-gFAAjnYfvNOf-_xuhKFxqcwjjqVWut5ai_IVwbX3vE814ANN08IRvLnORKhdGTtZiTFvNJCsM_wb3G3KDycaWZt1grjVCoZ9X-8HjPH2kPEo_XXs0jajtMe1"/>
+<img class="w-10 h-10 rounded-full border-2 border-surface-container-highest object-cover" data-alt="Close-up portrait of creative professional with cinematic depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD45r3ENG52aUKh1oJeeyM7A9UQgwozeFhx0bVdq0Zs4dqrzeNFqeW3hIP5AVRZ3ujcQlDFIspWK9RCNEpzWhaElU9e2Lg3rJMzeX4YtK8QrLoRmrq2OEw0rwmqghROoyHc7xO3td6SdkYP3t0xjiWMc6pq1rPnXwhZ7ehRAW9uVYMoCe-qlWHF0E4co9AymxnUVjEAtQnQ_lG4VmQvQLKKvnNegWF8d15ahusYyTeBi1a0Rav5vp04DC04Ja7Iqt9ASEJnVp35KXiO"/>
+</div>
+<p class="text-sm text-on-surface-variant font-medium">Joined by 10k+ Lead Project Managers</p>
+</div>
+</div>
+<!-- Right Side: Login Form -->
+<div class="p-8 md:p-16 flex flex-col justify-center bg-surface-container-low/40">
+<div class="mb-10 text-left">
+<p class="text-tertiary font-bold tracking-widest text-[10px] uppercase mb-2">Welcome to ProManageBasic</p>
+<h3 class="text-3xl font-bold text-on-surface mb-2">Sign in to your account</h3>
+<p class="text-on-surface-variant text-sm">Enter your credentials to access the enterprise tier.</p>
+</div>
+<form class="space-y-6">
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1" for="username">Username or Email</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl group-focus-within:text-primary transition-colors" data-icon="mail">mail</span>
+<input class="w-full pl-12 pr-4 py-4 rounded-xl bg-surface-container-highest/30 border-0 focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-on-surface-variant/50 transition-all ghost-border" id="username" placeholder="name@company.com" type="text"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between items-center">
+<label class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1" for="password">Password</label>
+<a class="text-xs font-medium text-primary hover:text-primary-container transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl group-focus-within:text-primary transition-colors" data-icon="lock">lock</span>
+<input class="w-full pl-12 pr-4 py-4 rounded-xl bg-surface-container-highest/30 border-0 focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-on-surface-variant/50 transition-all ghost-border" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined" data-icon="visibility_off">visibility_off</span>
+</button>
+</div>
+</div>
+<div class="flex items-center space-x-3">
+<div class="relative flex items-center">
+<input class="w-5 h-5 rounded bg-surface-container-highest/50 border-outline-variant text-primary focus:ring-primary focus:ring-offset-surface" id="remember" type="checkbox"/>
+</div>
+<label class="text-sm font-medium text-on-surface-variant select-none cursor-pointer" for="remember">Remember this device for 30 days</label>
+</div>
+<div class="pt-4 space-y-4">
+<button class="w-full primary-gradient py-4 rounded-xl text-on-primary font-bold text-lg shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform flex items-center justify-center gap-2" type="submit">
+<span>Sign In</span>
+<span class="material-symbols-outlined text-xl" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<div class="flex items-center justify-center gap-2">
+<span class="text-sm text-on-surface-variant">Don't have an account?</span>
+<a class="text-sm font-bold text-primary hover:underline" href="#">Create an Account</a>
+</div>
+</div>
+</form>
+<div class="mt-12 flex flex-col items-center gap-4">
+<div class="h-[1px] w-full bg-outline-variant/10"></div>
+<div class="flex items-center gap-6 text-on-surface-variant/60">
+<div class="flex items-center gap-1.5 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Enterprise Grade Security</span>
+</div>
+<div class="flex items-center gap-1.5 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-sm" data-icon="security">security</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Secured by jBCrypt</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Utility Links -->
+<div class="absolute bottom-8 left-0 right-0 flex justify-center gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant/40">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Compliance</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</main>
+</body></html>

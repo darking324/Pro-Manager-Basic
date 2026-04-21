@@ -1,0 +1,9 @@
+@echo off
+echo Starting ProManage Backend Server...
+if not exist "apache-maven-3.9.6" (
+    echo Downloading Maven...
+    powershell -Command "Invoke-WebRequest -Uri 'https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.zip' -OutFile 'maven.zip'; Expand-Archive -Path 'maven.zip' -DestinationPath '.'; Remove-Item 'maven.zip'"
+)
+echo Starting the Java server...
+.\apache-maven-3.9.6\bin\mvn.cmd clean compile exec:java
+pause

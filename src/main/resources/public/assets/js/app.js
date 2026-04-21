@@ -14,6 +14,8 @@ const state = {
     section: "dashboard"
 };
 
+let API_BASE = resolveApiBase();
+
 const el = {
     authView: document.getElementById("auth-view"),
     workspaceView: document.getElementById("workspace-view"),
@@ -37,6 +39,10 @@ const el = {
     profileSection: document.getElementById("profile-section"),
     statsGrid: document.getElementById("stats-grid"),
     trend: document.getElementById("revenue-trend"),
+    completionRate: document.getElementById("completion-rate"),
+    statusBars: document.getElementById("status-bars"),
+    dueSoonMetric: document.getElementById("due-soon-metric"),
+    revenueMetric: document.getElementById("revenue-metric"),
 
     filterStatus: document.getElementById("filter-status"),
     filterPriority: document.getElementById("filter-priority"),
@@ -44,6 +50,7 @@ const el = {
     filterTo: document.getElementById("filter-to"),
     clearFilters: document.getElementById("clear-filters"),
     newTaskBtn: document.getElementById("new-task-btn"),
+    taskInsights: document.getElementById("task-insights"),
     tasksEmpty: document.getElementById("tasks-empty"),
     tasksError: document.getElementById("tasks-error"),
 
@@ -78,6 +85,15 @@ function boot() {
 function bindEvents() {
     el.showSignup.addEventListener("click", () => toggleAuthForm("signup"));
     el.showLogin.addEventListener("click", () => toggleAuthForm("login"));
+
+    [
+        ...el.loginForm.querySelectorAll("input"),
+        ...el.signupForm.querySelectorAll("input")
+    ].forEach((input) => {
+        input.addEventListener("input", () => {
+            el.authError.classList.add("hidden");
+        });
+    });
 
     el.loginForm.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -222,11 +238,18 @@ function toggleAuthForm(mode) {
 }
 
 async function signup(payload) {
+    const normalized = normalizeSignupPayload(payload);
+    if (!normalized.ok) {
+        showAuthError(normalized.message);
+        return;
+    }
+
+    setAuthPending("signup", true);
     withLoading(true);
     try {
         const result = await apiRequest("/api/auth/signup", {
             method: "POST",
-            body: payload,
+            body: normalized.data,
             auth: false
         });
 
@@ -234,23 +257,38 @@ async function signup(payload) {
             throw new Error(result.message || "Signup failed.");
         }
 
-        pushToast("Account created. Please login.", "success");
+        if (result.data?.mode === "in-memory") {
+            pushToast("Account created in temporary local mode. Please login.", "success");
+        } else {
+            pushToast("Account created. Please login.", "success");
+        }
+
         toggleAuthForm("login");
         el.loginForm.reset();
+        el.loginForm.elements.email.value = normalized.data.email;
+        el.loginForm.elements.password.value = "";
         el.signupForm.reset();
     } catch (error) {
         showAuthError(error.message);
     } finally {
+        setAuthPending("signup", false);
         withLoading(false);
     }
 }
 
 async function login(payload) {
+    const normalized = normalizeLoginPayload(payload);
+    if (!normalized.ok) {
+        showAuthError(normalized.message);
+        return;
+    }
+
+    setAuthPending("login", true);
     withLoading(true);
     try {
         const result = await apiRequest("/api/auth/login", {
             method: "POST",
-            body: payload,
+            body: normalized.data,
             auth: false
         });
 
@@ -263,22 +301,33 @@ async function login(payload) {
         localStorage.setItem("pm_token", state.token);
         localStorage.setItem("pm_user", JSON.stringify(state.user));
 
-        showWorkspace();
         await initializeWorkspace();
-        pushToast("Welcome back.", "success");
+
+        if (result.data?.mode === "in-memory") {
+            pushToast("Welcome back. Running in temporary local mode.", "success");
+        } else {
+            pushToast("Welcome back.", "success");
+        }
     } catch (error) {
+        clearSession();
+        showAuth();
         showAuthError(error.message);
     } finally {
+        setAuthPending("login", false);
         withLoading(false);
     }
 }
 
-function logout() {
+function clearSession() {
     state.token = "";
     state.user = null;
     state.tasks = [];
     localStorage.removeItem("pm_token");
     localStorage.removeItem("pm_user");
+}
+
+function logout() {
+    clearSession();
     showAuth();
     pushToast("Session ended.", "success");
 }
@@ -374,8 +423,36 @@ function renderDashboard() {
     ];
 
     el.statsGrid.innerHTML = cards
-        .map(([label, value]) => `<article class="stat-card"><p>${label}</p><h3>${escapeHtml(String(value))}</h3></article>`)
+        .map(([label, value]) => `<article class="stat-card"><p>${label}</p><h3>${escapeHtml(formatMetricValue(label, value))}</h3></article>`)
         .join("");
+
+    const total = Number(data.total || 0);
+    const completed = Number(data.completed || 0);
+    const inProgress = Number(data.inProgress || 0);
+    const todo = Number(data.todo || 0);
+    const completion = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const statusItems = [
+        ["To-Do", todo],
+        ["Active", inProgress],
+        ["Done", completed]
+    ];
+
+    el.completionRate.textContent = `${completion}%`;
+    el.statusBars.innerHTML = statusItems
+        .map(([label, count]) => {
+            const width = total > 0 ? Math.max(6, Math.round((count / total) * 100)) : 0;
+            return `
+                <div class="status-row">
+                    <span class="status-label">${escapeHtml(label)}</span>
+                    <div class="status-track"><div class="status-fill" style="width:${width}%"></div></div>
+                    <span class="status-value">${escapeHtml(String(count))}</span>
+                </div>
+            `;
+        })
+        .join("");
+
+    el.dueSoonMetric.textContent = escapeHtml(String(data.dueSoon || 0));
+    el.revenueMetric.textContent = escapeHtml(formatNumber(data.totalRevenue || 0));
 
     const trend = Array.isArray(data.revenueTrend) ? data.revenueTrend : [];
     if (trend.length === 0) {
@@ -445,9 +522,53 @@ function renderTaskBoard() {
     const all = byStatus.todo.length + byStatus.in_progress.length + byStatus.completed.length;
     el.tasksEmpty.classList.toggle("hidden", all > 0);
 
+    renderTaskInsights(byStatus);
+
     el.colTodo.querySelectorAll(".task-card").forEach(bindDragStart);
     el.colProgress.querySelectorAll(".task-card").forEach(bindDragStart);
     el.colCompleted.querySelectorAll(".task-card").forEach(bindDragStart);
+}
+
+function renderTaskInsights(byStatus) {
+    const allTasks = [...byStatus.todo, ...byStatus.in_progress, ...byStatus.completed];
+    if (allTasks.length === 0) {
+        el.taskInsights.innerHTML = "";
+        return;
+    }
+
+    const highPriority = allTasks.filter((task) => task.priority === "high").length;
+    const nextDue = allTasks
+        .filter((task) => task.dueDate)
+        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
+    const activeRevenue = byStatus.in_progress.reduce((sum, task) => sum + Number(task.revenue || 0), 0);
+
+    const cards = [
+        {
+            label: "Critical Load",
+            value: `${highPriority} high-priority task${highPriority === 1 ? "" : "s"}`,
+            note: highPriority > 0 ? "Consider assigning owners today" : "No urgent task pressure"
+        },
+        {
+            label: "Nearest Deadline",
+            value: nextDue ? nextDue.title : "No due dates set",
+            note: nextDue ? `Due ${nextDue.dueDate}` : "Add due dates for better planning"
+        },
+        {
+            label: "Revenue in Motion",
+            value: formatNumber(activeRevenue),
+            note: `${byStatus.in_progress.length} task${byStatus.in_progress.length === 1 ? "" : "s"} in progress`
+        }
+    ];
+
+    el.taskInsights.innerHTML = cards
+        .map((item) => `
+            <article class="insight-card">
+                <p>${escapeHtml(item.label)}</p>
+                <h4>${escapeHtml(item.value)}</h4>
+                <small>${escapeHtml(item.note)}</small>
+            </article>
+        `)
+        .join("");
 }
 
 function renderTaskCard(task) {
@@ -611,29 +732,235 @@ async function apiRequest(path, options = {}) {
         headers.Authorization = `Bearer ${state.token}`;
     }
 
-    const response = await fetch(path, {
-        method: options.method || "GET",
-        headers,
-        body: options.body ? JSON.stringify(options.body) : undefined
+    const candidateBases = buildApiBaseCandidates(API_BASE);
+    let lastNetworkError = null;
+
+    for (const base of candidateBases) {
+        const url = toApiUrl(path, base);
+
+        try {
+            const response = await fetch(url, {
+                method: options.method || "GET",
+                headers,
+                body: options.body ? JSON.stringify(options.body) : undefined
+            });
+
+            const rawBody = await response.text();
+            const payload = tryParseJson(rawBody) || {
+                success: false,
+                message: buildNonJsonMessage(rawBody, url)
+            };
+
+            if (response.status === 401) {
+                if (options.auth !== false) {
+                    clearSession();
+                    showAuth();
+                    throw new Error("Session expired. Login again.");
+                }
+
+                throw new Error(payload.message || "Unauthorized.");
+            }
+
+            if (!response.ok) {
+                throw new Error(payload.message || `Request failed with status ${response.status}.`);
+            }
+
+            if (base !== API_BASE) {
+                API_BASE = base;
+                localStorage.setItem("pm_api_base", API_BASE);
+            }
+
+            return payload;
+        } catch (error) {
+            if (error instanceof TypeError) {
+                lastNetworkError = error;
+                continue;
+            }
+            throw error;
+        }
+    }
+
+    if (lastNetworkError) {
+        const tried = candidateBases.join(" or ");
+        throw new Error(`Cannot reach API server at ${tried}. Start backend with 'mvn exec:java' and try again.`);
+    }
+
+    throw new Error("API request failed.");
+}
+
+function resolveApiBase() {
+    const query = new URLSearchParams(window.location.search);
+    const fromQuery = normalizeApiBase(query.get("apiBase"));
+    if (fromQuery) {
+        localStorage.setItem("pm_api_base", fromQuery);
+        return fromQuery;
+    }
+
+    const fromStorage = normalizeApiBase(localStorage.getItem("pm_api_base"));
+    if (fromStorage) {
+        return fromStorage;
+    }
+
+    if (window.location.protocol === "file:" || !window.location.hostname) {
+        return "http://localhost:8080";
+    }
+
+    const isLocalHost = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+    if (isLocalHost) {
+        return `${window.location.protocol}//${window.location.hostname}:8080`;
+    }
+
+    return normalizeApiBase(window.location.origin) || "http://localhost:8080";
+}
+
+function toApiUrlWithBase(path, base) {
+    if (/^https?:\/\//i.test(path)) {
+        return path;
+    }
+
+    if (path.startsWith("/")) {
+        return `${base}${path}`;
+    }
+
+    return `${base}/${path}`;
+}
+
+function toApiUrl(path, base) {
+    return toApiUrlWithBase(path, base || API_BASE);
+}
+
+function buildApiBaseCandidates(primaryBase) {
+    const candidates = [];
+    const normalizedPrimary = normalizeApiBase(primaryBase);
+    if (normalizedPrimary) {
+        candidates.push(normalizedPrimary);
+    }
+
+    if (window.location.protocol === "file:") {
+        candidates.push("http://localhost:8080");
+        candidates.push("http://127.0.0.1:8080");
+    } else {
+        if (window.location.hostname === "127.0.0.1") {
+            candidates.push(`${window.location.protocol}//localhost:8080`);
+        }
+
+        if (window.location.hostname === "localhost") {
+            candidates.push(`${window.location.protocol}//127.0.0.1:8080`);
+        }
+
+        candidates.push(`${window.location.protocol}//localhost:8080`);
+        candidates.push(`${window.location.protocol}//127.0.0.1:8080`);
+    }
+
+    if (candidates.length === 0) {
+        candidates.push("http://localhost:8080");
+    }
+
+    return [...new Set(candidates.map(normalizeApiBase).filter(Boolean))];
+}
+
+function normalizeApiBase(value) {
+    if (!value) {
+        return "";
+    }
+
+    const normalized = value.trim().replace(/\/$/, "");
+    if (!normalized || normalized === "null" || normalized === "undefined") {
+        return "";
+    }
+
+    return normalized;
+}
+
+function normalizeSignupPayload(payload) {
+    const name = String(payload.name || "").trim();
+    const email = String(payload.email || "").trim().toLowerCase();
+    const password = String(payload.password || "");
+    const confirmPassword = String(payload.confirmPassword || "");
+
+    if (!name) {
+        return {ok: false, message: "Please enter your name."};
+    }
+
+    if (!email || !email.includes("@")) {
+        return {ok: false, message: "Please enter a valid email address."};
+    }
+
+    if (password.length < 6) {
+        return {ok: false, message: "Password must be at least 6 characters."};
+    }
+
+    if (password !== confirmPassword) {
+        return {ok: false, message: "Passwords do not match."};
+    }
+
+    return {
+        ok: true,
+        data: {name, email, password}
+    };
+}
+
+function normalizeLoginPayload(payload) {
+    const email = String(payload.email || "").trim().toLowerCase();
+    const password = String(payload.password || "");
+
+    if (!email || !email.includes("@")) {
+        return {ok: false, message: "Please enter a valid email address."};
+    }
+
+    if (!password) {
+        return {ok: false, message: "Please enter your password."};
+    }
+
+    return {
+        ok: true,
+        data: {email, password}
+    };
+}
+
+function setAuthPending(mode, pending) {
+    const form = mode === "signup" ? el.signupForm : el.loginForm;
+    const submit = form.querySelector("button[type='submit']");
+    if (!(submit instanceof HTMLButtonElement)) {
+        return;
+    }
+
+    form.querySelectorAll("input,button").forEach((node) => {
+        node.disabled = pending;
     });
 
-    let payload;
+    if (pending) {
+        submit.dataset.label = submit.textContent || "";
+        submit.textContent = mode === "signup" ? "Creating account..." : "Signing in...";
+        return;
+    }
+
+    submit.textContent = submit.dataset.label || (mode === "signup" ? "Sign Up" : "Login");
+}
+
+function tryParseJson(rawBody) {
+    if (!rawBody || !rawBody.trim()) {
+        return null;
+    }
+
     try {
-        payload = await response.json();
-    } catch (error) {
-        payload = {success: false, message: "Invalid server response."};
+        return JSON.parse(rawBody);
+    } catch {
+        return null;
+    }
+}
+
+function buildNonJsonMessage(rawBody, url) {
+    const body = (rawBody || "").trim();
+    if (!body) {
+        return `Empty response from ${url}.`;
     }
 
-    if (response.status === 401) {
-        logout();
-        throw new Error("Session expired. Login again.");
+    if (/<!doctype|<html/i.test(body)) {
+        return `API endpoint not reached at ${url}. Backend should run on ${API_BASE}.`;
     }
 
-    if (!response.ok) {
-        throw new Error(payload.message || `Request failed with status ${response.status}.`);
-    }
-
-    return payload;
+    return "Invalid server response.";
 }
 
 function withLoading(enabled) {
@@ -649,6 +976,17 @@ function pushToast(message, type = "success") {
     window.setTimeout(() => {
         node.remove();
     }, 2800);
+}
+
+function formatMetricValue(label, value) {
+    if (label === "Revenue") {
+        return formatNumber(Number(value || 0));
+    }
+    return String(value ?? 0);
+}
+
+function formatNumber(value) {
+    return new Intl.NumberFormat("en-IN").format(Number(value || 0));
 }
 
 function escapeHtml(value) {
